@@ -9,11 +9,19 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"net/http"
 	"strings"
+	//"github.com/tidwall/gjson"
+	//"bytes"
+
+	"bytes"
+	"github.com/tidwall/gjson"
+
 )
 //"github.com/PuerkitoBio/goquery"
 //"github.com/opesun/goquery"
 var gl_url string
 var gl_logfile string
+
+
 func parse_cmdline(){
 
 
@@ -39,6 +47,9 @@ func init_logfile() {
 	}
 	log.SetOutput(logFile)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+}
+func scratch_one_news(url string) {
+
 }
 func scratch_website(url string){
 
@@ -71,17 +82,70 @@ func scratch_website(url string){
 				}
 			}
 		}
+		//log.Println(destScript)
 
+
+		size := bytes.Count([]byte(destScript),nil)
 		offset := strings.Index(destScript,"contentModel")
-		log.Println(destScript[offset])
+		//log.Println(destScript[offset:(size)]);
+
+		offset_1 := strings.Index(destScript[offset:size],"{")
+		offset = offset+offset_1
+		//log.Println(destScript[offset:size]);
+
+		offset_1 = strings.Index(destScript[offset:size],"siblings")
+		offset = offset+offset_1
+		//log.Println(destScript[offset:size]);
+
+		s := strings.Split(destScript[offset:size],"registryURL:")
+		destScript = s[0];
+		size = bytes.Count([]byte(destScript),nil)
+		//log.Println(destScript)
+
+		offset_1 = strings.Index(destScript,"{")
+		offset = offset_1
+		//log.Println(destScript[offset:size]);
+
+		//now got you  "articleList"
+		/*
+			"articleList":{[
+				{
+				"uri": ...
+				"headline": ...
+				"thumbnail": ...
+				"duration": ...
+				"description": ...
+				}
+			]}
+
+		*/
+
+		result := gjson.Get(destScript[offset:size], "articleList")
+		for _, item := range result.Array() {
+			log.Println("----------------")
+			//log.Println(item.String())
+			item_uri :=item.Get("uri");
+			//item_thumbnail :=item.Get("thumbnail");
+			//item_headline :=item.Get("headline");
+			//item_uri :=item.Get("uri");
+			//item_description :=item.Get("description");
+			log.Printf("item_uri--->%s " ,item_uri.String())
+
+
+		}
+
 
 }
 
+
 func main() {
+
 	log.Print("build @ " + time.UnixDate)
 	parse_cmdline();
+	gl_url = "https://edition.cnn.com"
+
 	init_logfile();
 	log.Println("==============================Start:")
-	scratch_website("https://edition.cnn.com")
+	scratch_website(gl_url)
 	log.Println("==============================End:")
 }
